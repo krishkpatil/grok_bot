@@ -5,33 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grok Chatbot</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
 </head>
-<body class="bg-gray-900 text-gray-200 min-h-screen flex items-center justify-center">
-  <div class="w-full max-w-md bg-gray-800 rounded shadow-lg p-6">
-    <h1 class="text-2xl font-bold text-center mb-4">Grok Chatbot</h1>
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="w-full max-w-4xl bg-gray-800 rounded shadow-lg flex flex-col h-[80vh] md:h-[90vh]">
+    <!-- Header -->
+    <div class="bg-gray-700 py-4 px-6 rounded-t text-center">
+      <h1 class="text-2xl font-bold">Grok Chatbot</h1>
+    </div>
 
     <!-- Chat Box -->
-    <div id="chat-box" class="h-64 overflow-y-auto bg-gray-700 p-4 rounded mb-4">
+    <div id="chat-box" class="flex-grow overflow-y-auto bg-gray-700 p-4 rounded-b mb-4">
       <!-- Messages will be appended here -->
     </div>
 
+    <!-- File Display -->
+    <div id="file-display" class="flex items-center justify-between bg-gray-600 text-gray-300 p-2 rounded mb-4 hidden">
+      <span id="file-name" class="truncate"></span>
+      <button id="remove-file-btn" class="text-red-500 hover:text-red-700 font-bold">Remove</button>
+    </div>
+
     <!-- User Input + File Upload + Send Button -->
-    <div class="flex mb-4">
+    <div class="flex items-center gap-4 px-6 pb-4">
       <input
         type="text"
         id="chat-input"
         placeholder="Type your message..."
-        class="flex-grow bg-gray-600 text-gray-200 p-2 rounded-l outline-none focus:ring focus:ring-blue-500"
+        class="flex-grow bg-gray-600 text-gray-200 p-3 rounded outline-none focus:ring focus:ring-blue-500"
       />
-      <div class="relative">
-        <label for="file-input" class="bg-gray-600 text-gray-200 px-3 py-2 cursor-pointer hover:bg-gray-500 rounded-l border-r border-gray-500">
-          Upload
-        </label>
+      <label class="bg-gray-600 text-gray-200 px-4 py-2 cursor-pointer hover:bg-gray-500 rounded">
+        Upload
         <input type="file" id="file-input" class="hidden" />
-      </div>
+      </label>
       <button
         id="send-btn"
-        class="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
       >
         Send
       </button>
@@ -43,6 +51,27 @@
     const fileInput = document.getElementById("file-input");
     const chatBox = document.getElementById("chat-box");
     const sendBtn = document.getElementById("send-btn");
+    const fileDisplay = document.getElementById("file-display");
+    const fileName = document.getElementById("file-name");
+    const removeFileBtn = document.getElementById("remove-file-btn");
+
+    let selectedFile = null;
+
+    // Handle file selection
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length > 0) {
+        selectedFile = fileInput.files[0];
+        fileName.textContent = selectedFile.name;
+        fileDisplay.classList.remove("hidden");
+      }
+    });
+
+    // Remove selected file
+    removeFileBtn.addEventListener("click", () => {
+      fileInput.value = ""; // Clear file input
+      selectedFile = null;
+      fileDisplay.classList.add("hidden");
+    });
 
     sendBtn.addEventListener("click", sendMessage);
     chatInput.addEventListener("keyup", (e) => {
@@ -51,19 +80,25 @@
 
     async function sendMessage() {
       const userMessage = chatInput.value.trim();
-      const file = fileInput.files[0]; // Get the selected file
 
-      if (!userMessage && !file) return;
+      if (!userMessage && !selectedFile) return;
 
       // Display the user's message if present
       if (userMessage) {
-        chatBox.innerHTML += `<div class="text-blue-400 mb-2">You: ${userMessage}</div>`;
+        chatBox.innerHTML += `<div class="text-blue-400 mb-2"><strong>You:</strong> ${userMessage}</div>`;
         chatInput.value = "";
       }
 
+      // Add "Grok: typing..." placeholder
+      const typingPlaceholder = document.createElement("div");
+      typingPlaceholder.classList.add("text-green-400", "mb-4");
+      typingPlaceholder.innerHTML = "<strong>Grok:</strong> typing...";
+      chatBox.appendChild(typingPlaceholder);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
       const formData = new FormData();
       if (userMessage) formData.append("message", userMessage);
-      if (file) formData.append("file", file);
+      if (selectedFile) formData.append("file", selectedFile);
 
       try {
         const resp = await fetch("/chat/send", {
@@ -73,12 +108,15 @@
         const data = await resp.json();
         const botReply = data.reply || "[No reply received]";
 
-        // Display the bot's reply
-        chatBox.innerHTML += `<div class="text-green-400 mb-2">Grok: ${botReply}</div>`;
+        // Render the bot's reply as Markdown
+        const renderedReply = marked.parse(botReply);
+
+        // Replace "typing..." with the actual reply
+        typingPlaceholder.innerHTML = `<strong>Grok:</strong> ${renderedReply}`;
         chatBox.scrollTop = chatBox.scrollHeight;
       } catch (err) {
         console.error("Error sending message:", err);
-        chatBox.innerHTML += `<div class="text-red-400">Grok: [Error sending message]</div>`;
+        typingPlaceholder.innerHTML = `<strong>Grok:</strong> [Error sending message]`;
       }
     }
   </script>
