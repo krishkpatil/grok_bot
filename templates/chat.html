@@ -7,22 +7,27 @@
   <!-- Tailwind (optional) -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-6">
-  <div class="max-w-lg mx-auto bg-white rounded shadow p-4">
-    <h1 class="text-xl font-bold mb-4">Grok Chatbot</h1>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center">
+
+  <!-- Chat Container -->
+  <div class="max-w-lg w-full bg-gray-800 text-white rounded shadow p-4">
+    <h1 class="text-xl font-bold mb-4 text-center">Grok Chatbot</h1>
 
     <!-- Chat display -->
-    <div id="chat-box" class="border border-gray-300 rounded p-2 h-64 overflow-y-auto mb-4">
+    <div 
+      id="chat-box"
+      class="border border-gray-600 rounded p-2 h-64 overflow-y-auto mb-4 bg-gray-700"
+    >
       <!-- messages appear here -->
     </div>
 
-    <!-- User input + send button -->
+    <!-- User input + send button (centered horizontally) -->
     <div class="flex">
       <input
         type="text"
         id="chat-input"
         placeholder="Type your message..."
-        class="flex-grow border border-gray-300 rounded p-2 mr-2"
+        class="flex-grow border border-gray-600 rounded p-2 mr-2 bg-gray-700 focus:outline-none"
       />
       <button
         id="send-btn"
@@ -48,7 +53,7 @@
       if (!userMessage) return;
 
       // Display user's message
-      chatBox.innerHTML += `<div class="text-blue-600 mb-2">You: ${userMessage}</div>`;
+      chatBox.innerHTML += `<div class="text-blue-300 mb-2">You: ${userMessage}</div>`;
       chatInput.value = "";
 
       // Prepare form data
@@ -65,11 +70,11 @@
         const botReply = data.reply || "[No reply received]";
 
         // Display Grok's reply
-        chatBox.innerHTML += `<div class="text-green-700 mb-2">Grok: ${botReply}</div>`;
+        chatBox.innerHTML += `<div class="text-green-300 mb-2">Grok: ${botReply}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
       } catch (err) {
         console.error("Error sending message:", err);
-        chatBox.innerHTML += `<div class="text-red-500">Grok: [Error sending message]</div>`;
+        chatBox.innerHTML += `<div class="text-red-300">Grok: [Error sending message]</div>`;
       }
     }
   </script>
