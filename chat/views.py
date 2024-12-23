@@ -99,7 +99,7 @@ def send_message(request):
         messages = [
             {
                 "role": "system",
-                "content": "You are a helpful assistant that reads information provided and generates responses or scripts when prompted."
+                "content": "You are a helpful assistant that reads information provided and generates responses or youtube video or instagram video scripts when prompted."
             },
             {"role": "user", "content": combined_message},
         ]
