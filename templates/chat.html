@@ -2,36 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Grok Chatbot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Tailwind (optional) -->
+  <title>Grok Chatbot</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 min-h-screen flex items-center justify-center">
+<body class="bg-gray-900 text-gray-200 min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md bg-gray-800 rounded shadow-lg p-6">
+    <h1 class="text-2xl font-bold text-center mb-4">Grok Chatbot</h1>
 
-  <!-- Chat Container -->
-  <div class="max-w-lg w-full bg-gray-800 text-white rounded shadow p-4">
-    <h1 class="text-xl font-bold mb-4 text-center">Grok Chatbot</h1>
-
-    <!-- Chat display -->
-    <div 
-      id="chat-box"
-      class="border border-gray-600 rounded p-2 h-64 overflow-y-auto mb-4 bg-gray-700"
-    >
-      <!-- messages appear here -->
+    <!-- Chat Box -->
+    <div id="chat-box" class="h-64 overflow-y-auto bg-gray-700 p-4 rounded mb-4">
+      <!-- Messages will be appended here -->
     </div>
 
-    <!-- User input + send button (centered horizontally) -->
-    <div class="flex">
+    <!-- User Input + File Upload + Send Button -->
+    <div class="flex mb-4">
       <input
         type="text"
         id="chat-input"
         placeholder="Type your message..."
-        class="flex-grow border border-gray-600 rounded p-2 mr-2 bg-gray-700 focus:outline-none"
+        class="flex-grow bg-gray-600 text-gray-200 p-2 rounded-l outline-none focus:ring focus:ring-blue-500"
       />
+      <div class="relative">
+        <label for="file-input" class="bg-gray-600 text-gray-200 px-3 py-2 cursor-pointer hover:bg-gray-500 rounded-l border-r border-gray-500">
+          Upload
+        </label>
+        <input type="file" id="file-input" class="hidden" />
+      </div>
       <button
         id="send-btn"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        class="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
       >
         Send
       </button>
@@ -40,6 +40,7 @@
 
   <script>
     const chatInput = document.getElementById("chat-input");
+    const fileInput = document.getElementById("file-input");
     const chatBox = document.getElementById("chat-box");
     const sendBtn = document.getElementById("send-btn");
 
@@ -50,31 +51,34 @@
 
     async function sendMessage() {
       const userMessage = chatInput.value.trim();
-      if (!userMessage) return;
+      const file = fileInput.files[0]; // Get the selected file
 
-      // Display user's message
-      chatBox.innerHTML += `<div class="text-blue-300 mb-2">You: ${userMessage}</div>`;
-      chatInput.value = "";
+      if (!userMessage && !file) return;
 
-      // Prepare form data
+      // Display the user's message if present
+      if (userMessage) {
+        chatBox.innerHTML += `<div class="text-blue-400 mb-2">You: ${userMessage}</div>`;
+        chatInput.value = "";
+      }
+
       const formData = new FormData();
-      formData.append("message", userMessage);
+      if (userMessage) formData.append("message", userMessage);
+      if (file) formData.append("file", file);
 
       try {
-        // Send POST to Django
         const resp = await fetch("/chat/send", {
           method: "POST",
-          body: formData
+          body: formData,
         });
         const data = await resp.json();
         const botReply = data.reply || "[No reply received]";
 
-        // Display Grok's reply
-        chatBox.innerHTML += `<div class="text-green-300 mb-2">Grok: ${botReply}</div>`;
+        // Display the bot's reply
+        chatBox.innerHTML += `<div class="text-green-400 mb-2">Grok: ${botReply}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
       } catch (err) {
         console.error("Error sending message:", err);
-        chatBox.innerHTML += `<div class="text-red-300">Grok: [Error sending message]</div>`;
+        chatBox.innerHTML += `<div class="text-red-400">Grok: [Error sending message]</div>`;
       }
     }
   </script>
