@@ -5,120 +5,156 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grok Chatbot</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
 </head>
 <body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
-  <div class="w-full max-w-4xl bg-gray-800 rounded shadow-lg flex flex-col h-[80vh] md:h-[90vh]">
-    <!-- Header -->
-    <div class="bg-gray-700 py-4 px-6 rounded-t text-center">
-      <h1 class="text-2xl font-bold">Grok Chatbot</h1>
+  <!-- Main Container -->
+  <div class="flex flex-col lg:flex-row w-full max-w-5xl bg-gray-800 rounded shadow-lg">
+    <!-- Sidebar for Chat History -->
+    <div class="hidden lg:flex flex-col bg-gray-700 w-1/4 p-4 rounded-l-lg">
+      <h2 class="text-xl font-bold mb-4">Chat History</h2>
+      <div id="chat-history" class="flex flex-col gap-4 overflow-y-auto h-full">
+        {% for chat in chats %}
+        <div class="bg-gray-600 p-3 rounded cursor-pointer chat-history-item" data-message="{{ chat.message }}" data-response="{{ chat.response }}">
+          <p class="text-sm text-gray-400">{{ chat.time_ago }}</p>
+          <p class="text-sm text-white truncate">{{ chat.message }}</p>
+        </div>
+        {% endfor %}
+      </div>
     </div>
 
-    <!-- Chat Box -->
-    <div id="chat-box" class="flex-grow overflow-y-auto bg-gray-700 p-4 rounded-b mb-4">
-      <!-- Messages will be appended here -->
-    </div>
+    <!-- Main Chat Section -->
+    <div class="flex-grow flex flex-col p-6">
+      <h1 class="text-2xl font-bold text-center mb-4">Grok Chatbot</h1>
 
-    <!-- File Display -->
-    <div id="file-display" class="flex items-center justify-between bg-gray-600 text-gray-300 p-2 rounded mb-4 hidden">
-      <span id="file-name" class="truncate"></span>
-      <button id="remove-file-btn" class="text-red-500 hover:text-red-700 font-bold">Remove</button>
-    </div>
+      <!-- Chat Box -->
+      <div id="chat-box" class="flex flex-col gap-4 h-64 overflow-y-auto bg-gray-700 p-4 rounded mb-4">
+        <!-- Messages will appear here -->
+      </div>
 
-    <!-- User Input + File Upload + Send Button -->
-    <div class="flex items-center gap-4 px-6 pb-4">
-      <input
-        type="text"
-        id="chat-input"
-        placeholder="Type your message..."
-        class="flex-grow bg-gray-600 text-gray-200 p-3 rounded outline-none focus:ring focus:ring-blue-500"
-      />
-      <label class="bg-gray-600 text-gray-200 px-4 py-2 cursor-pointer hover:bg-gray-500 rounded">
-        Upload
-        <input type="file" id="file-input" class="hidden" />
-      </label>
-      <button
-        id="send-btn"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        Send
-      </button>
+      <!-- File Upload Box -->
+      <div id="file-container" class="hidden flex flex-col bg-gray-700 p-4 rounded mb-4">
+        <div class="flex items-center justify-between">
+          <span id="uploaded-file-name" class="truncate text-gray-300">Uploaded File</span>
+          <div class="flex gap-2">
+            <button id="edit-file-btn" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Edit</button>
+            <button id="remove-file-btn" class="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit File Modal -->
+      <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-gray-800 w-full max-w-lg rounded shadow-lg p-6">
+          <h2 class="text-lg font-bold mb-4">Edit File Content</h2>
+          <textarea id="edit-file-content" class="w-full bg-gray-700 text-gray-300 p-3 rounded resize-none" rows="10"></textarea>
+          <div class="flex justify-end gap-4 mt-4">
+            <button id="cancel-edit-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</button>
+            <button id="save-edit-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Input + File Upload -->
+      <div class="flex items-center gap-4">
+        <textarea
+          id="chat-input"
+          placeholder="Type your message..."
+          rows="3"
+          class="flex-grow bg-gray-600 text-gray-200 p-3 rounded outline-none focus:ring focus:ring-blue-500 resize-none"
+        ></textarea>
+        <label class="bg-gray-600 text-gray-200 px-4 py-2 cursor-pointer hover:bg-gray-500 rounded">
+          Upload
+          <input type="file" id="file-input" class="hidden" />
+        </label>
+        <button id="send-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Chat History -->
+  <div class="lg:hidden flex flex-col bg-gray-800 p-4 mt-4">
+    <h2 class="text-xl font-bold mb-4">Chat History</h2>
+    <div id="mobile-chat-history" class="flex flex-col gap-4 overflow-y-auto">
+      {% for chat in chats %}
+      <div class="bg-gray-700 p-3 rounded cursor-pointer chat-history-item" data-message="{{ chat.message }}" data-response="{{ chat.response }}">
+        <p class="text-sm text-gray-400">{{ chat.time_ago }}</p>
+        <p class="text-sm text-white truncate">{{ chat.message }}</p>
+      </div>
+      {% endfor %}
     </div>
   </div>
 
   <script>
-    const chatInput = document.getElementById("chat-input");
-    const fileInput = document.getElementById("file-input");
     const chatBox = document.getElementById("chat-box");
+    const chatInput = document.getElementById("chat-input");
     const sendBtn = document.getElementById("send-btn");
-    const fileDisplay = document.getElementById("file-display");
-    const fileName = document.getElementById("file-name");
-    const removeFileBtn = document.getElementById("remove-file-btn");
-
+    const fileInput = document.getElementById("file-input");
+    const fileContainer = document.getElementById("file-container");
+    const uploadedFileName = document.getElementById("uploaded-file-name");
+    const editModal = document.getElementById("edit-modal");
+    const editFileContent = document.getElementById("edit-file-content");
+    const chatHistoryItems = document.querySelectorAll(".chat-history-item");
+    
     let selectedFile = null;
 
-    // Handle file selection
+    // Handle click events for chat history items
+    chatHistoryItems.forEach(item => {
+      item.addEventListener("click", () => {
+        const message = item.getAttribute("data-message");
+        const response = item.getAttribute("data-response");
+
+        // Display the chat in the chat box
+        chatBox.innerHTML = `
+          <div class="text-blue-400"><strong>You:</strong> ${message}</div>
+          <div class="text-green-400"><strong>Grok:</strong> ${response}</div>
+        `;
+      });
+    });
+
+    // Handle file upload
     fileInput.addEventListener("change", () => {
       if (fileInput.files.length > 0) {
         selectedFile = fileInput.files[0];
-        fileName.textContent = selectedFile.name;
-        fileDisplay.classList.remove("hidden");
+        uploadedFileName.textContent = `Uploaded File: ${selectedFile.name}`;
+        fileContainer.classList.remove("hidden");
       }
     });
 
-    // Remove selected file
-    removeFileBtn.addEventListener("click", () => {
-      fileInput.value = ""; // Clear file input
-      selectedFile = null;
-      fileDisplay.classList.add("hidden");
-    });
-
-    sendBtn.addEventListener("click", sendMessage);
-    chatInput.addEventListener("keyup", (e) => {
-      if (e.key === "Enter") sendMessage();
-    });
-
-    async function sendMessage() {
+    // Handle sending messages
+    sendBtn.addEventListener("click", async () => {
       const userMessage = chatInput.value.trim();
-
       if (!userMessage && !selectedFile) return;
 
-      // Display the user's message if present
-      if (userMessage) {
-        chatBox.innerHTML += `<div class="text-blue-400 mb-2"><strong>You:</strong> ${userMessage}</div>`;
-        chatInput.value = "";
-      }
+      // Display user's message in the chat box
+      chatBox.innerHTML += `<div class="text-blue-400"><strong>You:</strong> ${userMessage}</div>`;
 
-      // Add "Grok: typing..." placeholder
+      // Simulate "Grok: typing..." placeholder
       const typingPlaceholder = document.createElement("div");
-      typingPlaceholder.classList.add("text-green-400", "mb-4");
+      typingPlaceholder.classList.add("text-green-400");
       typingPlaceholder.innerHTML = "<strong>Grok:</strong> typing...";
       chatBox.appendChild(typingPlaceholder);
-      chatBox.scrollTop = chatBox.scrollHeight;
 
+      // Prepare data for the server
       const formData = new FormData();
-      if (userMessage) formData.append("message", userMessage);
-      if (selectedFile) formData.append("file", selectedFile);
+      formData.append("message", userMessage);
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
 
+      // Send the request
       try {
-        const resp = await fetch("/chat/send", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await resp.json();
-        const botReply = data.reply || "[No reply received]";
-
-        // Render the bot's reply as Markdown
-        const renderedReply = marked.parse(botReply);
-
-        // Replace "typing..." with the actual reply
-        typingPlaceholder.innerHTML = `<strong>Grok:</strong> ${renderedReply}`;
-        chatBox.scrollTop = chatBox.scrollHeight;
+        const response = await fetch("/chat/send/", { method: "POST", body: formData });
+        const data = await response.json();
+        typingPlaceholder.innerHTML = `<strong>Grok:</strong> ${data.reply || "[No reply received]"}`;
       } catch (err) {
         console.error("Error sending message:", err);
-        typingPlaceholder.innerHTML = `<strong>Grok:</strong> [Error sending message]`;
+        typingPlaceholder.innerHTML = "<strong>Grok:</strong> [Error sending message]";
       }
-    }
+
+      chatInput.value = ""; // Clear the input
+      selectedFile = null; // Reset file selection
+      fileContainer.classList.add("hidden"); // Hide file container
+    });
   </script>
 </body>
 </html>
