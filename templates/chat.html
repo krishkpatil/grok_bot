@@ -2,32 +2,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Grok Chatbot</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Montserrat -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
+  <style>
+    /* Custom scrollbar for better aesthetics */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #4B5563;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #6B7280;
+    }
+  </style>
 </head>
 <body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
   <!-- Main Container -->
-  <div class="flex flex-col lg:flex-row w-full max-w-5xl bg-gray-800 rounded shadow-lg">
-    <!-- Sidebar for Chat History -->
-    <div class="hidden lg:flex flex-col bg-gray-700 w-1/4 p-4 rounded-l-lg">
-      <h2 class="text-xl font-bold mb-4">Chat History</h2>
-      <div id="chat-history" class="flex flex-col gap-4 overflow-y-auto h-full">
+  <div class="flex flex-col lg:flex-row w-full max-w-6xl bg-gray-800 rounded shadow-lg overflow-hidden">
+    <!-- Sidebar for Navbar and Chat History -->
+    <aside class="flex flex-col bg-gray-700 w-full lg:w-1/4 p-4 rounded-l-lg max-h-screen overflow-y-auto">
+      <!-- Navbar Section -->
+      <div class="mb-6">
+        <h1 class="text-3xl font-semibold text-center" style="font-family: 'Montserrat', sans-serif;">Claude</h1>
+      </div>
+      
+      <!-- Search Bar -->
+      <div class="mb-4">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search chats..."
+          class="w-full bg-gray-600 text-gray-200 p-2 rounded focus:outline-none focus:ring focus:ring-blue-500"
+          aria-label="Search chat history"
+        />
+      </div>
+
+      <!-- Chat History List -->
+      <div id="chat-history" class="flex flex-col gap-4 mb-4">
         {% for chat in chats %}
-        <div class="bg-gray-600 p-3 rounded cursor-pointer chat-history-item" data-message="{{ chat.message }}" data-response="{{ chat.response }}">
-          <p class="text-sm text-gray-400">{{ chat.time_ago }}</p>
-          <p class="text-sm text-white truncate">{{ chat.message }}</p>
+        <div 
+          class="bg-gray-600 p-3 rounded cursor-pointer chat-history-item hover:bg-gray-500 transition"
+          tabindex="0"
+          role="button"
+          aria-pressed="false"
+          data-message="{{ chat.message | escape }}"
+          data-response="{{ chat.response | escape }}">
+          <p class="text-xs text-gray-400">{{ chat.time_ago }}</p>
+          <p class="text-sm text-white truncate">{{ chat.message | escape }}</p>
         </div>
         {% endfor %}
       </div>
-    </div>
+
+      <!-- Pagination Controls -->
+      <div id="pagination-controls" class="flex justify-center items-center gap-2">
+        <button id="prev-page" class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-500 focus:outline-none focus:ring focus:ring-blue-500" disabled>Previous</button>
+        <span id="current-page" class="text-sm">1</span>
+        <button id="next-page" class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-500 focus:outline-none focus:ring focus:ring-blue-500">Next</button>
+      </div>
+    </aside>
 
     <!-- Main Chat Section -->
-    <div class="flex-grow flex flex-col p-6">
+    <main class="flex-grow flex flex-col p-6">
       <h1 class="text-2xl font-bold text-center mb-4">Grok Chatbot</h1>
 
       <!-- Chat Box -->
-      <div id="chat-box" class="flex flex-col gap-4 h-64 overflow-y-auto bg-gray-700 p-4 rounded mb-4">
+      <div id="chat-box" class="flex flex-col gap-4 flex-grow overflow-y-auto bg-gray-700 p-4 rounded mb-4">
         <!-- Messages will appear here -->
       </div>
 
@@ -36,20 +81,8 @@
         <div class="flex items-center justify-between">
           <span id="uploaded-file-name" class="truncate text-gray-300">Uploaded File</span>
           <div class="flex gap-2">
-            <button id="edit-file-btn" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Edit</button>
-            <button id="remove-file-btn" class="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700">Remove</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Edit File Modal -->
-      <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-gray-800 w-full max-w-lg rounded shadow-lg p-6">
-          <h2 class="text-lg font-bold mb-4">Edit File Content</h2>
-          <textarea id="edit-file-content" class="w-full bg-gray-700 text-gray-300 p-3 rounded resize-none" rows="10"></textarea>
-          <div class="flex justify-end gap-4 mt-4">
-            <button id="cancel-edit-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</button>
-            <button id="save-edit-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+            <button id="edit-file-btn" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Edit</button>
+            <button id="remove-file-btn" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Remove</button>
           </div>
         </div>
       </div>
@@ -61,99 +94,319 @@
           placeholder="Type your message..."
           rows="3"
           class="flex-grow bg-gray-600 text-gray-200 p-3 rounded outline-none focus:ring focus:ring-blue-500 resize-none"
+          aria-label="Type your message"
         ></textarea>
-        <label class="bg-gray-600 text-gray-200 px-4 py-2 cursor-pointer hover:bg-gray-500 rounded">
+        <label class="bg-gray-600 text-gray-200 px-4 py-2 cursor-pointer hover:bg-gray-500 rounded flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
           Upload
-          <input type="file" id="file-input" class="hidden" />
+          <input type="file" id="file-input" class="hidden" aria-label="Upload file" />
         </label>
-        <button id="send-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Send</button>
+        <button id="send-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Send</button>
       </div>
-    </div>
+    </main>
   </div>
 
-  <!-- Mobile Chat History -->
-  <div class="lg:hidden flex flex-col bg-gray-800 p-4 mt-4">
-    <h2 class="text-xl font-bold mb-4">Chat History</h2>
-    <div id="mobile-chat-history" class="flex flex-col gap-4 overflow-y-auto">
-      {% for chat in chats %}
-      <div class="bg-gray-700 p-3 rounded cursor-pointer chat-history-item" data-message="{{ chat.message }}" data-response="{{ chat.response }}">
-        <p class="text-sm text-gray-400">{{ chat.time_ago }}</p>
-        <p class="text-sm text-white truncate">{{ chat.message }}</p>
+  <!-- Edit File Modal -->
+  <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="bg-gray-800 p-6 rounded-lg w-11/12 max-w-lg">
+      <h2 id="edit-modal-title" class="text-xl font-bold mb-4">Edit File Content</h2>
+      <textarea id="edit-file-content" rows="10" class="w-full bg-gray-700 text-gray-200 p-3 rounded resize-none focus:ring focus:ring-blue-500" aria-label="Edit file content"></textarea>
+      <div class="flex justify-end gap-4 mt-4">
+        <button id="cancel-edit-btn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">Cancel</button>
+        <button id="save-edit-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">Save</button>
       </div>
-      {% endfor %}
     </div>
   </div>
 
   <script>
-    const chatBox = document.getElementById("chat-box");
-    const chatInput = document.getElementById("chat-input");
-    const sendBtn = document.getElementById("send-btn");
-    const fileInput = document.getElementById("file-input");
-    const fileContainer = document.getElementById("file-container");
-    const uploadedFileName = document.getElementById("uploaded-file-name");
-    const editModal = document.getElementById("edit-modal");
-    const editFileContent = document.getElementById("edit-file-content");
-    const chatHistoryItems = document.querySelectorAll(".chat-history-item");
-    
-    let selectedFile = null;
+    document.addEventListener('DOMContentLoaded', () => {
+      // Utility function to safely escape HTML
+      const escapeHTML = (str) => {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      };
 
-    // Handle click events for chat history items
-    chatHistoryItems.forEach(item => {
-      item.addEventListener("click", () => {
-        const message = item.getAttribute("data-message");
-        const response = item.getAttribute("data-response");
+      const chatBox = document.getElementById("chat-box");
+      const chatInput = document.getElementById("chat-input");
+      const sendBtn = document.getElementById("send-btn");
+      const fileInput = document.getElementById("file-input");
+      const fileContainer = document.getElementById("file-container");
+      const uploadedFileName = document.getElementById("uploaded-file-name");
+      const editModal = document.getElementById("edit-modal");
+      const editFileContent = document.getElementById("edit-file-content");
+      const cancelEditBtn = document.getElementById("cancel-edit-btn");
+      const saveEditBtn = document.getElementById("save-edit-btn");
+      const chatHistoryItems = document.querySelectorAll(".chat-history-item");
+      const searchInput = document.getElementById("search-input");
+      const paginationControls = document.getElementById("pagination-controls");
+      const prevPageBtn = document.getElementById("prev-page");
+      const nextPageBtn = document.getElementById("next-page");
+      const currentPageSpan = document.getElementById("current-page");
 
-        // Display the chat in the chat box
-        chatBox.innerHTML = `
-          <div class="text-blue-400"><strong>You:</strong> ${message}</div>
-          <div class="text-green-400"><strong>Grok:</strong> ${response}</div>
-        `;
+      const ITEMS_PER_PAGE = 10;
+      let currentPage = 1;
+      let filteredChats = [];
+      let totalPages = 1;
+
+      let selectedFile = null;
+      let fileContent = "";
+
+      // Initialize chat history data
+      let allChats = Array.from(chatHistoryItems).map(item => ({
+        element: item,
+        message: item.getAttribute("data-message"),
+        response: item.getAttribute("data-response"),
+        timeAgo: item.querySelector(".text-xs").textContent.trim()
+      }));
+
+      // Function to render chat history based on current page and filtered chats
+      const renderChatHistory = () => {
+        const chatHistoryContainer = document.getElementById("chat-history");
+        chatHistoryContainer.innerHTML = '';
+
+        if (filteredChats.length === 0) {
+          chatHistoryContainer.innerHTML = '<p class="text-gray-400 text-center">No chats found.</p>';
+          paginationControls.classList.add("hidden");
+          return;
+        }
+
+        paginationControls.classList.remove("hidden");
+
+        // Calculate total pages
+        totalPages = Math.ceil(filteredChats.length / ITEMS_PER_PAGE);
+        currentPage = Math.min(currentPage, totalPages);
+
+        // Slice the chats for the current page
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const chatsToDisplay = filteredChats.slice(startIndex, endIndex);
+
+        // Append chats to the container
+        chatsToDisplay.forEach(chat => {
+          chatHistoryContainer.appendChild(chat.element);
+        });
+
+        // Update pagination buttons
+        currentPageSpan.textContent = `${currentPage} / ${totalPages}`;
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages;
+      };
+
+      // Function to filter chats based on search query
+      const filterChats = (query) => {
+        if (!query) {
+          filteredChats = allChats;
+        } else {
+          const lowerCaseQuery = query.toLowerCase();
+          filteredChats = allChats.filter(chat =>
+            chat.message.toLowerCase().includes(lowerCaseQuery) ||
+            chat.response.toLowerCase().includes(lowerCaseQuery)
+          );
+        }
+        currentPage = 1;
+        renderChatHistory();
+      };
+
+      // Initial setup
+      filteredChats = allChats;
+      renderChatHistory();
+
+      // Event listener for search input
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.trim();
+        filterChats(query);
       });
-    });
 
-    // Handle file upload
-    fileInput.addEventListener("change", () => {
-      if (fileInput.files.length > 0) {
-        selectedFile = fileInput.files[0];
-        uploadedFileName.textContent = `Uploaded File: ${selectedFile.name}`;
-        fileContainer.classList.remove("hidden");
-      }
-    });
+      // Event listeners for pagination buttons
+      prevPageBtn.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderChatHistory();
+        }
+      });
 
-    // Handle sending messages
-    sendBtn.addEventListener("click", async () => {
-      const userMessage = chatInput.value.trim();
-      if (!userMessage && !selectedFile) return;
+      nextPageBtn.addEventListener("click", () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderChatHistory();
+        }
+      });
 
-      // Display user's message in the chat box
-      chatBox.innerHTML += `<div class="text-blue-400"><strong>You:</strong> ${userMessage}</div>`;
+      // Scroll chat box to the bottom
+      const scrollToBottom = () => {
+        chatBox.scrollTop = chatBox.scrollHeight;
+      };
 
-      // Simulate "Grok: typing..." placeholder
-      const typingPlaceholder = document.createElement("div");
-      typingPlaceholder.classList.add("text-green-400");
-      typingPlaceholder.innerHTML = "<strong>Grok:</strong> typing...";
-      chatBox.appendChild(typingPlaceholder);
+      // Display a message in the chat box
+      const displayMessage = (sender, message, timestamp = null) => {
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add(sender === 'You' ? 'text-blue-400' : 'text-green-400');
+        messageDiv.innerHTML = `<strong>${sender}:</strong> ${escapeHTML(message)}${timestamp ? `<span class="block text-xs text-gray-500 mt-1">${timestamp}</span>` : ''}`;
+        chatBox.appendChild(messageDiv);
+        scrollToBottom();
+      };
 
-      // Prepare data for the server
-      const formData = new FormData();
-      formData.append("message", userMessage);
-      if (selectedFile) {
-        formData.append("file", selectedFile);
-      }
+      // Handle chat history clicks
+      const handleChatClick = (message, response) => {
+        chatBox.innerHTML = ""; // Clear existing messages
+        displayMessage("You", message);
+        displayMessage("Grok", response);
+      };
 
-      // Send the request
-      try {
-        const response = await fetch("/chat/send/", { method: "POST", body: formData });
-        const data = await response.json();
-        typingPlaceholder.innerHTML = `<strong>Grok:</strong> ${data.reply || "[No reply received]"}`;
-      } catch (err) {
-        console.error("Error sending message:", err);
-        typingPlaceholder.innerHTML = "<strong>Grok:</strong> [Error sending message]";
-      }
+      allChats.forEach(chat => {
+        chat.element.addEventListener("click", () => {
+          handleChatClick(chat.message, chat.response);
+        });
 
-      chatInput.value = ""; // Clear the input
-      selectedFile = null; // Reset file selection
-      fileContainer.classList.add("hidden"); // Hide file container
+        // Enable keyboard accessibility
+        chat.element.addEventListener("keypress", (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            chat.element.click();
+          }
+        });
+      });
+
+      // Handle file selection
+      fileInput.addEventListener("change", async () => {
+        if (fileInput.files.length > 0) {
+          selectedFile = fileInput.files[0];
+          uploadedFileName.textContent = `Uploaded File: ${selectedFile.name}`;
+          fileContainer.classList.remove("hidden");
+
+          const formData = new FormData();
+          formData.append("file", selectedFile);
+
+          try {
+            const resp = await fetch("/chat/upload_file/", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await resp.json();
+
+            if (data.content) {
+              fileContent = data.content; // Set the file content
+            } else {
+              alert(data.error || "Error extracting file content.");
+              // Reset file selection on error
+              resetFileSelection();
+            }
+          } catch (err) {
+            console.error("Error extracting file:", err);
+            alert("Error processing file.");
+            // Reset file selection on error
+            resetFileSelection();
+          }
+        }
+      });
+
+      // Reset file selection
+      const resetFileSelection = () => {
+        fileInput.value = "";
+        selectedFile = null;
+        fileContent = "";
+        fileContainer.classList.add("hidden");
+        uploadedFileName.textContent = "Uploaded File";
+      };
+
+      // Open edit modal
+      document.getElementById("edit-file-btn").addEventListener("click", () => {
+        if (fileContent) {
+          editFileContent.value = fileContent; // Populate modal with current file content
+          editModal.classList.remove("hidden");
+          editFileContent.focus();
+        } else {
+          alert("No file content to edit!");
+        }
+      });
+
+      // Close edit modal
+      const closeEditModal = () => {
+        editModal.classList.add("hidden");
+        editFileContent.value = "";
+      };
+
+      // Cancel editing
+      cancelEditBtn.addEventListener("click", () => {
+        closeEditModal();
+      });
+
+      // Save edited file content and reset file
+      saveEditBtn.addEventListener("click", () => {
+        const editedContent = editFileContent.value.trim();
+
+        if (!editedContent) {
+          alert("Cannot save empty content.");
+          return;
+        }
+
+        // Place the edited content in the message input box
+        chatInput.value = editedContent;
+
+        // Reset file variables
+        resetFileSelection();
+
+        // Close the modal
+        closeEditModal();
+      });
+
+      // Close modal when clicking outside the modal content
+      window.addEventListener("click", (e) => {
+        if (e.target === editModal) {
+          closeEditModal();
+        }
+      });
+
+      // Handle sending messages
+      sendBtn.addEventListener("click", async () => {
+        const userMessage = chatInput.value.trim();
+        if (!userMessage && !selectedFile) return;
+
+        // Display user's message in the chat box with timestamp
+        const userTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        displayMessage("You", userMessage, userTimestamp);
+
+        // Simulate "Grok: typing..." placeholder
+        const typingPlaceholder = document.createElement("div");
+        typingPlaceholder.classList.add("text-green-400", "animate-pulse");
+        typingPlaceholder.innerHTML = `<strong>Grok:</strong> typing...`;
+        chatBox.appendChild(typingPlaceholder);
+        scrollToBottom();
+
+        // Prepare data for the server
+        const formData = new FormData();
+        formData.append("message", userMessage);
+        if (selectedFile) {
+          formData.append("file", selectedFile);
+        }
+
+        // Send the request
+        try {
+          const response = await fetch("/chat/send/", { method: "POST", body: formData });
+          const data = await response.json();
+          typingPlaceholder.innerHTML = `<strong>Grok:</strong> ${escapeHTML(data.reply || "[No reply received]")}`;
+        } catch (err) {
+          console.error("Error sending message:", err);
+          typingPlaceholder.innerHTML = "<strong>Grok:</strong> [Error sending message]";
+        }
+
+        // Clear the input and reset file selection
+        chatInput.value = "";
+        resetFileSelection();
+      });
+
+      // Enable sending message with Enter key (while holding Shift for new lines)
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
+
+      // Initialize focus on chat input
+      chatInput.focus();
     });
   </script>
 </body>
