@@ -1,5 +1,8 @@
 # AI-Powered Video Script Generator
 
+![Screenshot 2024-12-25 at 6 12 04 pm](https://github.com/user-attachments/assets/e8e68f7f-a1b7-4c1f-8637-2a4c658ce5c1)
+
+
 A web application that enables users to dynamically generate AI-powered video scripts using the [x.ai API](https://x.ai/api). The application features a dynamic input field that supports text input, file uploads (documents and images), and links, providing an enhanced prompt for generating scripts.
 
 ---
